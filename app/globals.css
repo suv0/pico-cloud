@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-on-background font-body-base antialiased;
+  }
+}
+
+@layer utilities {
+  .hero-gradient {
+    background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+  }
+  .pricing-card-highlight {
+    border: 2px solid #004ac6;
+    box-shadow: 0 10px 30px -10px rgba(0, 74, 198, 0.2);
+  }
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+  .segment-pulse {
+    animation: segment-glow 1.5s ease-in-out infinite;
+  }
+  @keyframes segment-glow {
+    0%, 100% { background-color: #2563eb; }
+    50% { background-color: #b4c5ff; }
+  }
+
+  .highlight-pulse {
+    animation: highlight-pulse 2s ease-in-out 1;
+  }
+  @keyframes highlight-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+    50% { box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.35); }
+  }
+
+  .spec-highlight-pulse {
+    animation: spec-highlight-pulse 1.5s ease-in-out 1;
+  }
+  @keyframes spec-highlight-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0, 74, 198, 0); }
+    50% { box-shadow: 0 0 0 4px rgba(0, 74, 198, 0.25); }
+  }
+
+  .range-slider {
+    @apply h-2 w-full cursor-pointer appearance-none rounded-full bg-outline-variant accent-primary;
+  }
+  .range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #004ac6;
+    cursor: pointer;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px #004ac6;
+  }
+  .range-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #004ac6;
+    cursor: pointer;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px #004ac6;
+  }
+}

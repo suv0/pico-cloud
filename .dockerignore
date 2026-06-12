@@ -1,0 +1,8 @@
+.env
+.env.*
+node_modules
+.git
+.cursor
+docs
+.next
+.idea

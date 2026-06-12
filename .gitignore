@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+.next/
+out/
+
+# Prisma — keep migrations committed
+# prisma/migrations/
+
+# Environment (never commit real secrets)
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+build/
+dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Assignment PDF (not for public repo)
+*.pdf
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.iml
+
+# Local dev / AI session — not for public submission
+.cursor/
+AGENTS.md
+docs/
+.commandcode/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts

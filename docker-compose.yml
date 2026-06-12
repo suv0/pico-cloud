@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: pico
+      POSTGRES_PASSWORD: pico
+      POSTGRES_DB: pico
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pico"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    ports:
+      - "${PORT:-3080}:${PORT:-3080}"
+    environment:
+      PORT: "${PORT:-3080}"
+      DATABASE_URL: "postgresql://pico:pico@db:5432/pico"
+      SESSION_SECRET: "${SESSION_SECRET:-docker-dev-secret-32-chars-minimum-ok}"
+      COOKIE_SECURE: "false"
+      NODE_ENV: "production"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "const p=process.env.PORT||'3080'; fetch('http://127.0.0.1:'+p+'/api/status').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
+
+volumes:
+  db_data:

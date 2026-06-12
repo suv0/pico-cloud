@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" fill="none">
+  <rect width="200" height="120" rx="8" fill="#E8F0FE"/>
+  <path d="M30 80 L70 50 L110 75 L150 35 L170 90 L50 95 Z" fill="#004AC6" fill-opacity="0.15" stroke="#004AC6" stroke-width="2"/>
+  <circle cx="130" cy="58" r="8" fill="#004AC6"/>
+  <circle cx="130" cy="58" r="14" fill="none" stroke="#004AC6" stroke-width="1.5" stroke-opacity="0.5"/>
+  <text x="100" y="112" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#004AC6" font-weight="600">BD-02 Chittagong</text>
+</svg>

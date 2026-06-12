@@ -1,0 +1,218 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum ResourceStatus {
+  PENDING
+  PROVISIONING
+  ACTIVE
+  FAILED
+  SUSPENDED
+  TERMINATED
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PAID
+}
+
+enum PriceDimension {
+  vcpu
+  ram_gb
+  storage_gb
+}
+
+enum ComponentStatus {
+  OPERATIONAL
+  DEGRADED
+  MAJOR_OUTAGE
+}
+
+enum IncidentStatus {
+  INVESTIGATING
+  MONITORING
+  RESOLVED
+}
+
+enum IncidentSeverity {
+  MINOR
+  MAJOR
+}
+
+enum AuditEntityType {
+  resource
+  invoice
+  user
+  package
+  unit_price
+}
+
+enum AuditAction {
+  RESOURCE_PROVISION_REQUESTED
+  RESOURCE_PROVISION_STEP
+  RESOURCE_PROVISIONING_STARTED
+  RESOURCE_PROVISIONING_COMPLETE
+  HEALTH_CHECK_PASSED
+  RESOURCE_PROVISIONING_FAILED
+  RESOURCE_RETRY_REQUESTED
+  RESOURCE_RENAMED
+  RESOURCE_SUSPENDED
+  RESOURCE_RESUMED
+  RESOURCE_TERMINATED
+  INVOICE_CREATED
+  INVOICE_PAID
+  INVOICE_GRACE_EXPIRED
+  USER_SIGNED_UP
+  USER_LOGGED_IN
+  PACKAGE_UPDATED
+  UNIT_PRICE_UPDATED
+}
+
+// ── User ──────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String
+  role         UserRole @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+
+  resources   Resource[]
+  invoices    Invoice[]
+  auditEvents AuditEvent[]
+}
+
+// ── Package (fixed VM tiers) ─────────────────────────────────────────────────
+
+model Package {
+  id              String @id @default(cuid())
+  slug            String @unique
+  name            String
+  vcpu            Int
+  ramGb           Int
+  storageGb       Int
+  monthlyPriceBdt Int
+
+  resources Resource[]
+}
+
+// ── UnitPrice (for custom VM configurator) ───────────────────────────────────
+
+model UnitPrice {
+  id              String         @id @default(cuid())
+  dimension       PriceDimension @unique
+  pricePerUnitBdt Int
+}
+
+// ── Resource (provisioned VM) ─────────────────────────────────────────────────
+
+model Resource {
+  id              String         @id @default(cuid())
+  userId          String
+  packageId       String?
+  name            String
+  monthlyPriceBdt Int
+  vcpu            Int
+  ramGb           Int
+  storageGb       Int
+  regionCode      String         @default("bd-dhaka")
+  status          ResourceStatus @default(PENDING)
+  publicIp        String?
+  failureReason   String?
+  provisionedAt   DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id])
+  package      Package?      @relation(fields: [packageId], references: [id])
+  invoice      Invoice?
+  usageRecords UsageRecord[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+// ── Invoice ───────────────────────────────────────────────────────────────────
+
+model Invoice {
+  id               String        @id @default(cuid())
+  resourceId       String        @unique
+  userId           String
+  amountBdt        Int
+  status           InvoiceStatus @default(UNPAID)
+  paymentDueAt     DateTime
+  paidAt           DateTime?
+  paymentReference String?
+  cardLast4        String?
+  createdAt        DateTime      @default(now())
+
+  resource Resource @relation(fields: [resourceId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, status])
+}
+
+// ── AuditEvent ────────────────────────────────────────────────────────────────
+
+model AuditEvent {
+  id         String          @id @default(cuid())
+  entityType AuditEntityType
+  entityId   String
+  action     AuditAction
+  detail     String?
+  userId     String?
+  createdAt  DateTime        @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+}
+
+// ── Platform status (public /status page) ─────────────────────────────────────
+
+model PlatformComponent {
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  name        String
+  status      ComponentStatus
+  description String?
+  updatedAt   DateTime        @updatedAt
+}
+
+model Incident {
+  id            String           @id @default(cuid())
+  title         String
+  status        IncidentStatus
+  severity      IncidentSeverity
+  componentSlug String?
+  impactSummary String
+  startedAt     DateTime
+  resolvedAt    DateTime?
+  createdAt     DateTime         @default(now())
+}
+
+// ── Usage metering (seeded hourly buckets) ────────────────────────────────────
+
+model UsageRecord {
+  id           String   @id @default(cuid())
+  resourceId   String
+  bucketStart  DateTime
+  cpuAvgPct    Float
+  memAvgGb     Float
+  networkOutMb Float
+  resource     Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([resourceId, bucketStart])
+  @@index([resourceId, bucketStart])
+}
