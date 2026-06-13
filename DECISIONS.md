@@ -26,10 +26,12 @@ Hub: [DESIGN.md](DESIGN.md) · Diagrams: [ARCHITECTURE.md](ARCHITECTURE.md) · R
 
 ```typescript
 const VALID_TRANSITIONS: Record<ResourceStatus, ResourceStatus[]> = {
-  PENDING:      [PROVISIONING, FAILED],
-  PROVISIONING: [ACTIVE, FAILED],
-  ACTIVE:       [],              // terminal — no outbound transitions
-  FAILED:       [PENDING],        // retry only
+  [ResourceStatus.PENDING]:      [ResourceStatus.PROVISIONING, ResourceStatus.FAILED],
+  [ResourceStatus.PROVISIONING]: [ResourceStatus.ACTIVE, ResourceStatus.FAILED],
+  [ResourceStatus.ACTIVE]:       [ResourceStatus.SUSPENDED, ResourceStatus.TERMINATED],
+  [ResourceStatus.FAILED]:       [ResourceStatus.PENDING, ResourceStatus.TERMINATED],
+  [ResourceStatus.SUSPENDED]:    [ResourceStatus.ACTIVE, ResourceStatus.TERMINATED],
+  [ResourceStatus.TERMINATED]:   [],
 };
 ```
 

@@ -10,11 +10,19 @@ export async function middleware(req: NextRequest) {
 
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const session = await getIronSession<SessionData>(req.cookies as any, {
-    password: getSessionPassword(),
-    cookieName: 'pico-session',
-  });
+  // iron-session expects Pages Router cookies shape; App Router middleware
+  // provides NextRequest.cookies which exposes the same Map-like iterator but
+  // has a different nominal TS type. Both conform to the runtime contract
+  // iron-session reads (getAll/set/delete). The cast is type impedance, not
+  // unsafe — iron-session validates and signs the cookie payload internally.
+  const session = await getIronSession<SessionData>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    req.cookies as any,
+    {
+      password: getSessionPassword(),
+      cookieName: 'pico-session',
+    },
+  );
 
   const isLoggedIn = Boolean(session.userId);
 
