@@ -35,7 +35,7 @@ const VALID_TRANSITIONS: Record<ResourceStatus, ResourceStatus[]> = {
 
 **Persistence:** `Resource.status` is a Prisma enum — the DB rejects bogus values; the FSM table rejects illegal transitions in app code. Seed, APIs, and tests use enum members from `@prisma/client` (not parallel string unions).
 
-**Enforcement (A+ pass):** Every caller uses the central helper — including `recoverInterruptedProvisions()` (startup marks stuck `PENDING`/`PROVISIONING` → `FAILED`) and retry (`transitionResourceStatusIf` so only `FAILED` → `PENDING` when still failed). No code path skips the table.
+**Enforcement:** Every caller uses the central helper — including `recoverInterruptedProvisions()` (startup marks stuck `PENDING`/`PROVISIONING` → `FAILED`) and retry (`transitionResourceStatusIf` so only `FAILED` → `PENDING` when still failed). No code path skips the table.
 
 **Why:** One place to add states (`SUSPENDED`, etc.). Retry is `FAILED → PENDING` then re-run provision.
 
@@ -67,7 +67,7 @@ const VALID_TRANSITIONS: Record<ResourceStatus, ResourceStatus[]> = {
 
 **Client:** Fetches unit prices once; runs same function as sliders move.
 
-**Fail-closed (A+ pass):** If any unit price row is missing or ≤ 0, `loadUnitPricesFromDb()` throws `UnitPriceConfigurationError`; provision and estimate APIs return **503** (not silent zero pricing). Admin must fix seed or unit prices before custom VMs provision.
+**Fail-closed:** If any unit price row is missing or ≤ 0, `loadUnitPricesFromDb()` throws `UnitPriceConfigurationError`; provision and estimate APIs return **503** (not silent zero pricing). Admin must fix seed or unit prices before custom VMs provision.
 
 **At scale:** Add discount codes, tax, term length as parameters — function stays pure.
 
@@ -94,8 +94,6 @@ const VALID_TRANSITIONS: Record<ResourceStatus, ResourceStatus[]> = {
 **Ops-only admin:** Admins manage pricing and customer oversight; they can't provision VMs through the customer console. They can retry failed customer VMs (support ops).
 
 **At scale:** Redis role cache with invalidation on `User.update`, or short-lived JWT + revocation table.
-
-**If they ask about DB hit every request:** Acceptable at this scale; cookie holds `userId` only so permissions stay authoritative.
 
 **Admin prefetch:** `prefetch={false}` on admin nav links to avoid RSC prefetch storms during Docker demos on a single container.
 
@@ -163,7 +161,7 @@ const VALID_TRANSITIONS: Record<ResourceStatus, ResourceStatus[]> = {
 
 **HTTP cookies in Docker:** `COOKIE_SECURE=false` in compose so session cookies work over `http://localhost:3080`. Production HTTPS would omit this override so `secure` cookies are enforced.
 
-**Why no OTP:** Brief allows simple auth; OTP adds tables, UI, and edge cases for little rubric gain here.
+**Why no OTP:** Simple auth per brief; OTP adds tables, UI, and edge cases outside this scope.
 
 **Demo `SESSION_SECRET`:** Compose defaults a dev secret so `docker compose up --build` works with no `.env`; override in production via secrets manager (see README §3, §8).
 

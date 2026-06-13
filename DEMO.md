@@ -1,10 +1,10 @@
 # Demo guide
 
-Rubric sections 1-10 are in [README.md](README.md).
+Submission sections 1-10 are in [README.md](README.md).
 
 **Short on time?** Demo 1 alone (~5 min) is enough for the main customer flow.
 
-**Reviewers:** Use **Login** (not signup) and **Fill customer demo** / **Fill admin demo** on the login page — fastest path to seeded VMs. Signup is optional for empty-state testing.
+**Quick start:** Use **Login** (not signup) and **Fill customer demo** / **Fill admin demo** on the login page — fastest path to seeded VMs. Signup is optional for empty-state testing.
 
 ---
 
