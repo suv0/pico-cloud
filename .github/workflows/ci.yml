@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: pico
+          POSTGRES_PASSWORD: pico
+          POSTGRES_DB: pico
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://pico:pico@localhost:5432/pico
+
+      - run: npx next build
+        env:
+          DATABASE_URL: postgresql://pico:pico@localhost:5432/pico
+          SESSION_SECRET: ci-secret-32-characters-minimum-ok
+          COOKIE_SECURE: 'false'
+
+      - run: npm test
+        env:
+          DATABASE_URL: postgresql://pico:pico@localhost:5432/pico
+          SESSION_SECRET: ci-secret-32-characters-minimum-ok
+          COOKIE_SECURE: 'false'

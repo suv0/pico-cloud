@@ -133,7 +133,7 @@ const VALID_TRANSITIONS: Record<ResourceStatus, ResourceStatus[]> = {
 
 **Why:** The provisioning experience itself creates the activation moment — checklist, IP, timeline — before asking for payment. This is a legitimate self-service cloud pattern (AWS bills post-usage), not a gimmick. The FSM commits ACTIVE + invoice in one transaction; the checklist before the paywall is the natural demo flow.
 
-**Architecture reality (honest):** The MVP FSM creates the invoice atomically with ACTIVE. A prepaid model would restructure the provision transaction and UI — documented as a production alternative in DESIGN.md.
+**Concurrency:** Pay uses `updateMany({ where: { id, status: UNPAID } })` — two concurrent pay requests cannot both succeed. Provision uses `@@unique([userId, name])` on the Resource table — double-submit by name returns 409. Retry checks `status === FAILED` with `transitionResourceStatusIf` guarding the CAS move to PENDING.
 
 **Abuse controls:**
 - `isPaymentRequired()` returns true for both ACTIVE and SUSPENDED unpaid VMs (single choke point, tested)
