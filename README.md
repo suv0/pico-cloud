@@ -1,4 +1,4 @@
-# PICO Cloud
+﻿# PICO Cloud
 
 **Option 2: PICO Self-Service Cloud Module** · Abdul Hamid Shuvo · [suvo.me](https://suvo.me)
 
@@ -25,13 +25,7 @@ PostgreSQL, VM state machine (6 states), CloudProvider mock, Prisma domain enums
 
 ---
 
-## 2. Option selected
-
-Option 2: PICO Self-Service Cloud Module (see header). Maps to VMs, pricing, provision, and billing without over-scoping the take-home.
-
----
-
-## 3. How to run
+## 2. How to run
 
 ```bash
 git clone https://github.com/suv0/pico-cloud
@@ -39,7 +33,7 @@ cd pico-cloud
 docker compose up --build -d
 ```
 
-Open http://localhost:3080. No `.env` needed. Optional: copy `.env.example` to `.env` to change `PORT` or `SESSION_SECRET` if 3080 is taken. Postgres is available on host port 5433 (user `pico`, password `pico`) for direct DB inspection.
+Open http://localhost:3080. No `.env` needed. Optional: copy `.env.example` to `.env` to change `PORT` or `SESSION_SECRET` if 3080 is taken. Postgres is available on host port 5433 (user `pico`, password `pico`, database `pico`) for direct DB inspection.
 
 ```bash
 # Optional: run tests locally (Node 22+, matches Dockerfile)
@@ -56,7 +50,7 @@ Troubleshooting: see **Run it** in [DEMO.md](DEMO.md)
 
 ---
 
-## 4. Demo credentials
+## 3. Demo credentials
 
 | Email | Password |
 |-------|----------|
@@ -67,7 +61,7 @@ All accounts, signup, test cards: [DEMO.md](DEMO.md) (section **Demo accounts, s
 
 ---
 
-## 5. Key user flows
+## 4. Key user flows
 
 1. Customer: login or signup, configure, provision, pay, metrics
 2. Admin pricing: edit in `/admin`, customer site updates
@@ -78,7 +72,7 @@ Steps: [DEMO.md](DEMO.md)
 
 ---
 
-## 6. Architecture overview
+## 5. Architecture overview
 
 ```
 docker-compose.yml
@@ -90,13 +84,13 @@ Single web container, CloudProvider interface, server-side pricing and RBAC. [AR
 
 ---
 
-## 7. Data model overview
+## 6. Data model overview
 
 `User`, `Package`, `UnitPrice`, `Resource`, `Invoice`, `AuditEvent`. FSM: PENDING → PROVISIONING → ACTIVE | FAILED, with SUSPENDED and TERMINATED lifecycle states. Schema: `prisma/schema.prisma`. Data model: [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ---
 
-## 8. Known limitations
+## 7. Known limitations
 
 - In-process provisioning (retry after crash via startup recovery; production would use BullMQ)
 - Mock metrics and usage
@@ -107,7 +101,7 @@ Single web container, CloudProvider interface, server-side pricing and RBAC. [AR
 
 ---
 
-## 9. What I would improve with more time
+## 8. What I would improve with more time
 
 1. Job queue for durable provisioning (BullMQ)
 2. Rate limiting on auth
@@ -118,7 +112,7 @@ Single web container, CloudProvider interface, server-side pricing and RBAC. [AR
 
 ---
 
-## 10. AI tools used
+## 9. AI tools used
 
 Cursor IDE with Claude (agent-assisted in-repo). Workflow: spec and design decisions first, vertical slices, agent for boilerplate, human review and tests at every gate.
 
