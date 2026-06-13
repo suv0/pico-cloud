@@ -1,5 +1,7 @@
 import { db } from '@/lib/db';
-import { InvoiceStatus } from '@prisma/client';
+import { InvoiceStatus, ResourceStatus } from '@prisma/client';
+
+const BLOCKING_STATUSES: ResourceStatus[] = [ResourceStatus.ACTIVE, ResourceStatus.SUSPENDED];
 
 export class UnpaidQuotaError extends Error {
   public existingResourceId: string;
@@ -13,20 +15,6 @@ export class UnpaidQuotaError extends Error {
   }
 }
 
-export async function countBlockingUnpaidResources(userId: string): Promise<number> {
-  const resources = await db.resource.findMany({
-    where: {
-      userId,
-      status: { not: 'TERMINATED' },
-    },
-    include: { invoice: { select: { id: true, status: true } } },
-  });
-
-  return resources.filter(
-    (r) => !r.invoice || r.invoice.status === InvoiceStatus.UNPAID,
-  ).length;
-}
-
 export async function findBlockingResource(userId: string): Promise<{
   existingResourceId: string;
   invoiceId: string | null;
@@ -34,14 +22,14 @@ export async function findBlockingResource(userId: string): Promise<{
   const resources = await db.resource.findMany({
     where: {
       userId,
-      status: { not: 'TERMINATED' },
+      status: { in: BLOCKING_STATUSES },
     },
     include: { invoice: { select: { id: true, status: true } } },
     orderBy: { createdAt: 'asc' },
   });
 
   const blocking = resources.find(
-    (r) => !r.invoice || r.invoice.status === InvoiceStatus.UNPAID,
+    (r) => r.invoice?.status === InvoiceStatus.UNPAID,
   );
 
   if (!blocking) return null;

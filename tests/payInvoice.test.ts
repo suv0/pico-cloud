@@ -3,14 +3,24 @@ import { NextRequest } from 'next/server';
 import { POST as payInvoice } from '@/app/api/invoices/[id]/pay/route';
 import { DEMO_DECLINE_CARD, DEMO_SUCCESS_CARD } from '@/lib/payment/mockGateway';
 
-vi.mock('@/lib/db', () => ({
-  db: {
+vi.mock('@/lib/db', () => {
+  const box = {
     invoice: {
       findUnique: vi.fn(),
       updateMany: vi.fn(),
     },
-  },
-}));
+    resource: {
+      update: vi.fn(),
+    },
+  };
+  return {
+    db: {
+      invoice: box.invoice,
+      resource: box.resource,
+      $transaction: vi.fn((fn: (tx: typeof box) => unknown) => fn(box)),
+    },
+  };
+});
 
 vi.mock('@/lib/auth/apiSession', () => ({
   getApiSession: vi.fn(),
@@ -18,6 +28,14 @@ vi.mock('@/lib/auth/apiSession', () => ({
 
 vi.mock('@/lib/audit/logger', () => ({
   logEvent: vi.fn(),
+}));
+
+vi.mock('@/lib/provisioning/transitionResourceStatus', () => ({
+  transitionResourceStatus: vi.fn(),
+}));
+
+vi.mock('@/lib/cloud/mockPublicIp', () => ({
+  mockPublicIp: vi.fn(() => '203.0.113.99'),
 }));
 
 vi.mock('@/lib/payment/mockGateway', async (importOriginal) => {

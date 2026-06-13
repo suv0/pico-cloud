@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ResourceStatus } from '@prisma/client';
 import { db } from '@/lib/db';
 import { getApiSession } from '@/lib/auth/apiSession';
 import { logEvent } from '@/lib/audit/logger';
 import { processMockPayment } from '@/lib/payment/mockGateway';
 import { parsePaymentBody } from '@/lib/payment/parsePaymentBody';
 import { mockPublicIp } from '@/lib/cloud/mockPublicIp';
+import { transitionResourceStatus } from '@/lib/provisioning/transitionResourceStatus';
 
 export async function POST(
   req: NextRequest,
@@ -52,19 +54,41 @@ export async function POST(
     );
   }
 
-  const wasSuspended = invoice.resource.status === 'SUSPENDED';
+  const wasSuspended = invoice.resource.status === ResourceStatus.SUSPENDED;
 
-  const claim = await db.invoice.updateMany({
-    where: { id, status: 'UNPAID' },
-    data: {
-      status: 'PAID',
-      paidAt: new Date(),
-      paymentReference: payment.reference,
-      cardLast4: payment.last4,
-    },
+  const updated = await db.$transaction(async (tx) => {
+    const claim = await tx.invoice.updateMany({
+      where: { id, status: 'UNPAID' },
+      data: {
+        status: 'PAID',
+        paidAt: new Date(),
+        paymentReference: payment.reference,
+        cardLast4: payment.last4,
+      },
+    });
+
+    if (claim.count === 0) {
+      const current = await tx.invoice.findUnique({
+        where: { id },
+        include: { resource: true },
+      });
+      if (current?.status === 'PAID') return current;
+      return null;
+    }
+
+    if (wasSuspended) {
+      await transitionResourceStatus(tx, invoice.resource.id, ResourceStatus.ACTIVE, {
+        publicIp: mockPublicIp(invoice.resource.id),
+      });
+    }
+
+    return tx.invoice.findUnique({
+      where: { id },
+      include: { resource: true },
+    });
   });
 
-  if (claim.count === 0) {
+  if (!updated) {
     const current = await db.invoice.findUnique({
       where: { id },
       include: { resource: true },
@@ -76,14 +100,6 @@ export async function POST(
   }
 
   if (wasSuspended) {
-    await db.resource.update({
-      where: { id: invoice.resource.id },
-      data: {
-        status: 'ACTIVE',
-        publicIp: mockPublicIp(invoice.resource.id),
-      },
-    });
-
     await logEvent(
       'resource',
       invoice.resource.id,
@@ -91,15 +107,6 @@ export async function POST(
       'Restored after payment',
       session.userId,
     );
-  }
-
-  const updated = await db.invoice.findUnique({
-    where: { id },
-    include: { resource: true },
-  });
-
-  if (!updated) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
   await logEvent(

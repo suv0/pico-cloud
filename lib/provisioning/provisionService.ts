@@ -3,6 +3,7 @@ import { CloudProviderMock } from '@/lib/cloud/CloudProviderMock';
 import { logEvent } from '@/lib/audit/logger';
 import { InvoiceStatus, ResourceStatus } from '@prisma/client';
 import { transitionResourceStatus } from '@/lib/provisioning/transitionResourceStatus';
+import { PAYMENT_GRACE_DAYS } from '@/lib/billing/constants';
 
 const cloudProvider = new CloudProviderMock();
 
@@ -67,7 +68,7 @@ async function runProvision(resourceId: string): Promise<void> {
             userId: resource.userId,
             amountBdt: resource.monthlyPriceBdt,
             status: InvoiceStatus.UNPAID,
-            paymentDueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            paymentDueAt: new Date(Date.now() + PAYMENT_GRACE_DAYS * 24 * 60 * 60 * 1000),
           },
         });
 

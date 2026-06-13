@@ -26,8 +26,11 @@ export async function POST(req: NextRequest) {
 
   const user = await db.user.findUnique({ where: { email } });
   if (!user) {
-    // Constant-time response — do not reveal whether email exists
-    await bcrypt.compare(password, '$2a$12$invalidhashpadding000000000000000000000000000000000000000');
+    // Constant-time response: run bcrypt on a real cost-12 hash so that
+    // non-existent email does not return faster than a valid-email/wrong-password.
+    // The decoy hash was precomputed from bcrypt.hash('decoy...', 12) and is a
+    // valid $2a$12$ blob — bcryptjs will perform the full cost-12 computation.
+    await bcrypt.compare(password, '$2a$12$lTMqvY3ttvXmE0LO2qel8uZ7NDaJ1PyL8nXrLG4hcY9BmWojlXRIa');
     return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
   }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getApiAdminSession } from '@/lib/auth/requireAdmin';
 import { logEvent } from '@/lib/audit/logger';
+import { transitionResourceStatus } from '@/lib/provisioning/transitionResourceStatus';
 
 export async function POST(
   _req: NextRequest,
@@ -25,10 +26,7 @@ export async function POST(
     return NextResponse.json({ error: 'Cannot terminate a VM that is still provisioning' }, { status: 409 });
   }
 
-  await db.resource.update({
-    where: { id },
-    data: { status: 'TERMINATED', publicIp: null },
-  });
+  await transitionResourceStatus(db, id, 'TERMINATED', { publicIp: null });
 
   await logEvent('resource', id, 'RESOURCE_TERMINATED', 'Terminated by admin', session.userId);
 

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getApiSession } from '@/lib/auth/apiSession';
 import { logEvent } from '@/lib/audit/logger';
+import { transitionResourceStatus } from '@/lib/provisioning/transitionResourceStatus';
+import { ResourceStatus } from '@prisma/client';
 
 export async function POST(
   _req: NextRequest,
@@ -24,14 +26,11 @@ export async function POST(
     return NextResponse.json({ error: 'Cannot terminate a VM that is still provisioning' }, { status: 409 });
   }
 
-  if (resource.status === 'TERMINATED') {
+  if (resource.status === ResourceStatus.TERMINATED) {
     return NextResponse.json(resource);
   }
 
-  await db.resource.update({
-    where: { id },
-    data: { status: 'TERMINATED', publicIp: null },
-  });
+  await transitionResourceStatus(db, id, ResourceStatus.TERMINATED, { publicIp: null });
 
   await logEvent('resource', id, 'RESOURCE_TERMINATED', 'Terminated by customer', session.userId);
 

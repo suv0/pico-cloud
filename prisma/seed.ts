@@ -11,6 +11,7 @@ import {
   IncidentSeverity,
 } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { PAYMENT_GRACE_DAYS } from '../lib/billing/constants';
 import { generateUsageBucketsForRange } from '../lib/metrics/usageHistory';
 
 const db = new PrismaClient();
@@ -98,14 +99,14 @@ async function seedResourceIfMissing(spec: SeedResourceSpec) {
             paidAt: new Date(baseTime + spec.invoice.paidOffsetMs),
             paymentReference: spec.invoice.paymentReference,
             cardLast4: spec.invoice.cardLast4,
-            paymentDueAt: new Date(baseTime + spec.invoice.paidOffsetMs + 7 * 24 * 60 * 60 * 1000),
+            paymentDueAt: new Date(baseTime + spec.invoice.paidOffsetMs + PAYMENT_GRACE_DAYS * 24 * 60 * 60 * 1000),
           }
         : {
             resourceId: resource.id,
             userId: spec.userId,
             amountBdt: spec.packageRef.monthlyPriceBdt,
             status: spec.invoice.status,
-            paymentDueAt: new Date(baseTime + 7 * 24 * 60 * 60 * 1000),
+            paymentDueAt: new Date(baseTime + PAYMENT_GRACE_DAYS * 24 * 60 * 60 * 1000),
           };
 
     await db.invoice.create({ data: invoiceData });
