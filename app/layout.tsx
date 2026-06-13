@@ -17,6 +17,9 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'PICO Cloud — Self-Service Infrastructure',
   description: 'Provision virtual machines in seconds on the PICO Cloud platform.',
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({
